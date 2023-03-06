@@ -13,7 +13,9 @@ const FornSchema = Yup.object().shape({
     .min(3, 'Too Short Name!')
     .max(20, 'Too Long Name!')
     .required('Required'),
-  number: Yup.string().matches(phoneRegExp, 'Phone number is not valid'),
+  number: Yup.string()
+    .matches(phoneRegExp, 'Phone number is not valid')
+    .required('Required'),
 });
 
 export const ContactForm = ({ onSave }) => {

@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ContactForm } from './ContactForm/ContactForm';
 import { ContactList } from './ContactList/ContactList';
 import { Filter } from './Filter/Filter';
@@ -7,15 +7,13 @@ import { Layout } from './Layout/Layout';
 import { Report } from 'notiflix/build/notiflix-report-aio';
 import { getFilteredArray } from 'utils/getFilteredArray';
 
-class App extends Component {
-  state = {
-    contacts: [],
-    filter: '',
-  };
+export const App = () => {
+  const [contacts, setContacts] = useState(
+    () => JSON.parse(window.localStorage.getItem('contacts')) ?? []
+  );
+  const [filter, setFilter] = useState('');
 
-  addContact = newContact => {
-    const { contacts } = this.state;
-
+  const addContact = newContact => {
     if (
       contacts.find(
         contact => contact.name.toLowerCase() === newContact.name.toLowerCase()
@@ -28,72 +26,47 @@ class App extends Component {
       );
     }
 
-    this.setState(prevState => {
-      return { contacts: [newContact, ...prevState.contacts] };
-    });
+    setContacts([newContact, ...contacts]);
   };
 
-  deleteContact = contactId => {
-    this.setState(prevState => {
-      return {
-        contacts: prevState.contacts.filter(
-          contact => contact.id !== contactId
-        ),
-      };
-    });
+  const deleteContact = contactId => {
+    setContacts(contacts.filter(contact => contact.id !== contactId));
   };
 
-  editContact = updatedContact => {
-    this.setState(({ contacts }) => ({
-      contacts: contacts.map(contact => {
+  const editContact = updatedContact => {
+    setContacts(() =>
+      contacts.map(contact => {
         if (contact.id === updatedContact.id) {
           const newContact = { ...contact, ...updatedContact };
           return newContact;
         }
         return contact;
-      }),
-    }));
-  };
-
-  chengeFilter = event => {
-    this.setState({ filter: event.currentTarget.value });
-  };
-
-  componentDidMount() {
-    const parseContact = JSON.parse(localStorage.getItem('contacts'));
-
-    if (parseContact) {
-      this.setState({ contacts: parseContact });
-    }
-  }
-
-  componentDidUpdate(_, prevState) {
-    const { contacts } = this.state;
-
-    if (contacts !== prevState.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(contacts));
-    }
-  }
-
-  render() {
-    const { filter, contacts } = this.state;
-    const filteredContacts = getFilteredArray(contacts, 'name', filter);
-
-    return (
-      <Layout>
-        <h1>Phonebook</h1>
-        <ContactForm onSave={this.addContact} />
-        <h2>Contacts</h2>
-        <Filter onChange={this.chengeFilter} value={filter} />
-        <ContactList
-          contacts={filteredContacts}
-          onDelete={this.deleteContact}
-          editContact={this.editContact}
-        />
-        <GlobalStyle />
-      </Layout>
+      })
     );
-  }
-}
+  };
 
-export default App;
+  const chengeFilter = event => {
+    setFilter(event.currentTarget.value);
+  };
+
+  useEffect(() => {
+    window.localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
+
+  const filteredContacts = getFilteredArray(contacts, 'name', filter);
+
+  return (
+    <Layout>
+      <h1>Phonebook</h1>
+      <ContactForm onSave={addContact} />
+      <h2>Contacts</h2>
+      <Filter onChange={chengeFilter} value={filter} />
+      <ContactList
+        contacts={filteredContacts}
+        onDelete={deleteContact}
+        editContact={editContact}
+      />
+      <GlobalStyle />
+    </Layout>
+  );
+};
